@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Certificados Blockchain</title>
+  <script src="https://cdn.jsdelivr.net/gh/ethereum/web3.js/dist/web3.min.js"></script>
+</head>
+<body>
+  <h1>Registro e Verificação de Certificados</h1>
+
+  <section>
+    <h2>Registrar Certificado</h2>
+    <input id="registerId" type="number" placeholder="ID do Certificado">
+    <input id="registerName" type="text" placeholder="Nome do Aluno">
+    <input id="registerCourse" type="text" placeholder="Curso">
+    <input id="registerDate" type="text" placeholder="Data de Emissão">
+    <button onclick="registerCertificate()">Registrar</button>
+  </section>
+
+  <section>
+    <h2>Consultar Certificado</h2>
+    <input id="searchId" type="number" placeholder="ID do Certificado">
+    <button onclick="getCertificate()">Consultar</button>
+    <p id="certificateDetails"></p>
+  </section>
+
+  <section>
+    <h2>Revogar Certificado</h2>
+    <input id="revokeId" type="number" placeholder="ID do Certificado">
+    <button onclick="revokeCertificate()">Revogar</button>
+  </section>
+
+  <script>
+    let web3 = new Web3(Web3.givenProvider || "http://localhost:8545");
+    const contractAddress = "0xd9145CCE52D386f254917e481eB44e9943F39138";
+    const abi =  [
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "certId",
+				"type": "uint256"
+			},
+			{
+				"internalType": "string",
+				"name": "studentName",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "course",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "issueDate",
+				"type": "string"
+			}
+		],
+		"name": "registerCertificate",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "certId",
+				"type": "uint256"
+			}
+		],
+		"name": "revokeCertificate",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"stateMutability": "nonpayable",
+		"type": "constructor"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "certId",
+				"type": "uint256"
+			}
+		],
+		"name": "getCertificate",
+		"outputs": [
+			{
+				"internalType": "string",
+				"name": "studentName",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "course",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "issueDate",
+				"type": "string"
+			},
+			{
+				"internalType": "bool",
+				"name": "isValid",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "institution",
+		"outputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	}
+];
+
+    const contract = new web3.eth.Contract(abi, contractAddress);
+
+    async function registerCertificate() {
+      const accounts = await web3.eth.getAccounts();
+      const id = document.getElementById('registerId').value;
+      const name = document.getElementById('registerName').value;
+      const course = document.getElementById('registerCourse').value;
+      const date = document.getElementById('registerDate').value;
+
+      contract.methods.registerCertificate(id, name, course, date)
+        .send({ from: accounts[0] })
+        .then(() => alert("Certificado registrado com sucesso!"))
+        .catch(err => console.error(err));
+    }
+
+    async function getCertificate() {
+      const id = document.getElementById('searchId').value;
+
+      contract.methods.getCertificate(id)
+        .call()
+        .then(cert => {
+          document.getElementById('certificateDetails').innerText = 
+            `Nome: ${cert[0]}, Curso: ${cert[1]}, Data: ${cert[2]}, Válido: ${cert[3]}`;
+        })
+        .catch(err => console.error(err));
+    }
+
+    async function revokeCertificate() {
+      const accounts = await web3.eth.getAccounts();
+      const id = document.getElementById('revokeId').value;
+
+      contract.methods.revokeCertificate(id)
+        .send({ from: accounts[0] })
+        .then(() => alert("Certificado revogado com sucesso!"))
+        .catch(err => console.error(err));
+    }
+  </script>
+</body>
+</html>
